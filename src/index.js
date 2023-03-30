@@ -1,5 +1,9 @@
 const { Bitbucket } = require("bitbucket");
 
+const BRANCH_NAME = 'redocly-update';
+const COMMIT_AUTHOR = 'Redocly <bot@redocly.com>';
+const COMMIT_MESSAGE = 'Updated dependency';
+
 const requiredEnvVariables = [
   "BITBUCKET_TOKEN", "WORKSPACE_NAME", "REPOSITORY_NAME", "TARGET_BRANCH",
   "PACKAGE_NAME", "PACKAGE_VERSION",
@@ -73,11 +77,11 @@ function updateDependencyVersion(packageJsonContent) {
 }
 
 // TODO: something here. Maybe remove the old one
-async function checkoutBranchForUpdate({ commit, branсh = "redocly-update" }) {
+async function checkoutBranchForUpdate({ commit, branch = BRANCH_NAME }) {
   await bitbucket.repositories.createBranch({
     ...repositoryDetails,
     _body: {
-      name: branсh,
+      name: branch,
       target: {
         hash: commit,
       }
@@ -93,52 +97,78 @@ async function commitChanges({ branch, path, content }) {
     _body: {
       [path]: content,
     },
+    message: COMMIT_MESSAGE,
+    author: COMMIT_AUTHOR,
     branch,
-    message: 'Updated dependency',
-    author: 'Redocly <bot@redocly.com>'
   });
 
   return data;
 }
 
-
-// TODO: handle bad credentials
-getMainBranchCommitHash()
-  .then(commit => {
-    console.log(`Main branch latest commit - ${commit}`);
-
-    return getPackageJsonContent({ commit })
-      .then(content => {
-        console.log('The content of existing package.json');
-        console.log(content);
-
-        const version = getDependencyVersion(content);
-
-        if (!version) {
-          console.log('The dependency was not found. Nothing to update');
-          return;
+async function createPr(sourceBranch, destinationBranch) {
+  const { data } = await bitbucket.pullrequests.create({
+    ...repositoryDetails,
+    _body: {
+      title: 'Redocly dependency update',
+      source: {
+        branch: {
+          name: sourceBranch,
         }
-
-        // TODO: we may not need to update this at all
-        console.log(`Found "${PACKAGE_NAME}": "${version}". Desired version is ${PACKAGE_VERSION}`);
-
-        const updatedPackageJson = updateDependencyVersion(content, PACKAGE_VERSION);
-
-        console.log('Updated package.json');
-        console.log(updatedPackageJson);
-
-        console.log('Checkout a new branch `redocly-update` for the update...');
-
-        return checkoutBranchForUpdate({ branсh: 'redocly-update', commit })
-          .then(() => {
-            console.log('Committing new changes...');
-
-            commitChanges({
-              branсh: 'redocly-update',
-              path: PACKAGE_JSON_PATH,
-              content: updatedPackageJson
-            });
-          });
-      });
+      },
+      destination: {
+        branch: {
+          name: destinationBranch,
+        }
+      }
+    }
   });
 
+  return data;
+}
+
+// TODO: handle bad credentials
+
+async function main() {
+  const commit = await getMainBranchCommitHash();
+  console.log(`Main branch latest commit - ${commit}`);
+
+  const packageJsonContent = await getPackageJsonContent({ commit });
+
+  console.log('The content of existing package.json');
+  console.log(packageJsonContent);
+
+  const version = getDependencyVersion(packageJsonContent);
+
+  if (!version) {
+    console.log('The dependency was not found. Nothing to update');
+    return;
+  }
+
+  // TODO: we may not need to update this at all
+  console.log(`Found "${PACKAGE_NAME}": "${version}". Desired version is ${PACKAGE_VERSION}`);
+
+  const updatedPackageJson = updateDependencyVersion(packageJsonContent, PACKAGE_VERSION);
+
+  console.log('Updated package.json');
+  console.log(updatedPackageJson);
+
+  console.log(`Checkout a new branch '${BRANCH_NAME}' for the update...`);
+  await checkoutBranchForUpdate({ branch: BRANCH_NAME, commit });
+
+  console.log('Committing new changes...');
+
+  await commitChanges({
+    branch: BRANCH_NAME,
+    path: PACKAGE_JSON_PATH,
+    content: updatedPackageJson,
+  });
+
+  console.log('Creating a new PR...');
+
+  const data = await createPr(BRANCH_NAME, 'main');
+  console.log(data);
+
+  console.log('Done 🚀');
+}
+
+main();
