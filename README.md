@@ -18,7 +18,6 @@
 4. Fill the gaps in `.env` file
 5. Install the dependencies
     ``` sh
-    asdf install
     npm install
     ```
 6. Run the application

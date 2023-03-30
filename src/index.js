@@ -165,7 +165,7 @@ async function main() {
 
   console.log('Creating a new PR...');
 
-  const data = await createPr(BRANCH_NAME, 'main');
+  const data = await createPr('main', BRANCH_NAME);
   console.log(data);
 
   console.log('Done 🚀');
