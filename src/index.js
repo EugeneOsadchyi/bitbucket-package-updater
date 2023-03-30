@@ -92,7 +92,7 @@ async function checkoutBranchForUpdate({ commit, branch = BRANCH_NAME }) {
 }
 
 async function commitChanges({ branch, path, content }) {
-  const { data } = await bitbucket.source.createFileCommit({
+  const { data } = await bitbucket.repositories.createSrcFileCommit({
     ...repositoryDetails,
     _body: {
       [path]: content,
