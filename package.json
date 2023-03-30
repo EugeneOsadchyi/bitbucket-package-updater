@@ -4,9 +4,15 @@
   "description": "Updates package.json dependency and creates a new PR",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node --require dotenv/config src/index.js"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "bitbucket": "^2.11.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.3"
+  }
 }
