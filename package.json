@@ -1,0 +1,12 @@
+{
+  "name": "bitbucket-package-updater",
+  "version": "1.0.0",
+  "description": "Updates package.json dependency and creates a new PR",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
