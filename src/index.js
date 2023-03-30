@@ -90,11 +90,11 @@ function updateDependencyVersion(packageJsonContent) {
 
 
 // TODO: something here. Maybe remove the old one
-async function checkoutBranchForUpdate({ commit, branchName = "redocly-update" }) {
+async function checkoutBranchForUpdate({ commit, branсh = "redocly-update" }) {
   await bitbucket.repositories.createBranch({
     ...repositoryDetails,
     _body: {
-      name: branchName,
+      name: branсh,
       target: {
         hash: commit,
       }
@@ -116,17 +116,16 @@ async function checkoutBranchForUpdate({ commit, branchName = "redocly-update" }
 //   .then(({ data, headers }) => console.log(JSON.stringify(data, null, 2), headers))
 //   .catch((err) => console.error(JSON.stringify(err, null, 2)))
 
-async function commitChanges({ branch, fileName, content }) {
+async function commitChanges({ branch, path, content }) {
   const { data } = await bitbucket.source.createFileCommit({
     ...repositoryDetails,
-    _body: content,
-    files: [fileName],
+    _body: {
+      [path]: content,
+    },
     branch,
     message: 'Updated dependency',
-    author: 'Redocly'
+    author: 'Redocly <bot@redocly.com>'
   });
-
-  console.log(data);
 
   return data;
 }
@@ -159,32 +158,16 @@ getMainBranchCommitHash()
 
         console.log('Checkout a new branch `redocly-update` for the update...');
 
-        // return checkoutBranchForUpdate({ branchName: 'redocly-update', commit })
-        //   .then(() => {
+        return checkoutBranchForUpdate({ branсh: 'redocly-update', commit })
+          .then(() => {
+            console.log('Committing new changes...');
 
-        //   });
+            commitChanges({
+              branсh: 'redocly-update',
+              path: PACKAGE_JSON_PATH,
+              content: updatedPackageJson
+            });
+          });
       });
   });
 
-
-// const content = {
-//   name: 'sample-node-app',
-//   version: '1.0.0',
-//   description: 'Sample App',
-//   main: 'index.js',
-//   scripts: { test: 'echo "Error: no test specified" && exit 1' },
-//   keywords: [],
-//   author: '',
-//   license: 'ISC',
-//   dependencies: { redoc: '2.0.0' }
-// };
-
-// bitbucket.source.createFileCommit({
-//   ...repositoryDetails,
-//   _body: {
-//     'package.json': JSON.stringify(content, null, 2),
-//   },
-//   branch: 'redocly-update',
-//   message: 'Updated dependency',
-//   author: 'Redocly <bot@redocly.com>'
-// }).then(console.log()).catch(console.error);
