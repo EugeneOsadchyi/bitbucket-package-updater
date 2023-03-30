@@ -58,32 +58,21 @@ async function getPackageJsonContent({ path = PACKAGE_JSON_PATH, commit }) {
     path
   });
 
-  // TODO: JSON may be corrupted
-  return JSON.parse(raw);
+  return raw
 }
 
 function getDependencyVersion(packageJsonContent) {
-  return packageJsonContent?.dependencies?.[PACKAGE_NAME]
-    || packageJsonContent?.devDependencies?.[PACKAGE_NAME];
+  const regexp = `"${PACKAGE_NAME}":\\s*"(.*?)"`;
+  const match = packageJsonContent.match(new RegExp(regexp, 'm'));
+  return match?.[1];
 }
 
-// TODO: think of doing this in a better way. Change this to regexp
-function updateDependencyVersion(packageJsonContent, version) {
-  if (packageJsonContent?.dependencies?.[PACKAGE_NAME]) {
-    return updateDependencyVersionByType(packageJsonContent, 'dependencies', version);
-  } else if (packageJsonContent?.devDependencies?.[PACKAGE_NAME]) {
-    return updateDependencyVersionByType(packageJsonContent, 'devDependencies', version);
-  }
-}
+function updateDependencyVersion(packageJsonContent) {
+  const regexp = `("${PACKAGE_NAME}":\\s*)".*?"`;
 
-function updateDependencyVersionByType(packageJsonContent, dependencyType, version) {
-  return {
-    ...packageJsonContent,
-    [dependencyType]: {
-      ...packageJsonContent[dependencyType],
-      [PACKAGE_NAME]: version,
-    }
-  }
+  return packageJsonContent.replace(
+    new RegExp(regexp, 'm'), `$1"${PACKAGE_VERSION}"`
+  ) || packageJsonContent;
 }
 
 // bitbucket.repositories.readSrc({ ...repositoryDetails, commit: "54386e6edc4b0cbc481aaef4c2d68e65304892d6", path: '.gitignore' })
@@ -144,58 +133,58 @@ async function commitChanges({ branch, fileName, content }) {
 
 
 // // TODO: handle bad credentials
-// getMainBranchCommitHash()
-//   .then(commit => {
-//     console.log(`Main branch latest commit - ${commit}`);
+getMainBranchCommitHash()
+  .then(commit => {
+    console.log(`Main branch latest commit - ${commit}`);
 
-//     return getPackageJsonContent({ commit })
-//       .then(content => {
-//         console.log('The content of existing package.json');
-//         console.log(content);
+    return getPackageJsonContent({ commit })
+      .then(content => {
+        console.log('The content of existing package.json');
+        console.log(content);
 
-//         const version = getDependencyVersion(content);
+        const version = getDependencyVersion(content);
 
-//         if (!version) {
-//           console.log('The dependency was not found. Nothing to update');
-//           return;
-//         }
+        if (!version) {
+          console.log('The dependency was not found. Nothing to update');
+          return;
+        }
 
-//         // TODO: we may not need to update this at all
-//         console.log(`Found "${PACKAGE_NAME}": "${version}". Desired version is ${PACKAGE_VERSION}`);
+        // TODO: we may not need to update this at all
+        console.log(`Found "${PACKAGE_NAME}": "${version}". Desired version is ${PACKAGE_VERSION}`);
 
-//         const updatedPackageJson = updateDependencyVersion(content, PACKAGE_VERSION);
+        const updatedPackageJson = updateDependencyVersion(content, PACKAGE_VERSION);
 
-//         console.log('Updated package.json');
-//         console.log(updatedPackageJson);
+        console.log('Updated package.json');
+        console.log(updatedPackageJson);
 
-//         console.log('Checkout a new branch `redocly-update` for the update...');
+        console.log('Checkout a new branch `redocly-update` for the update...');
 
-//         return checkoutBranchForUpdate({ branchName: 'redocly-update', commit })
-//           .then(() => {
+        // return checkoutBranchForUpdate({ branchName: 'redocly-update', commit })
+        //   .then(() => {
 
-//           });
-//       });
-//   });
+        //   });
+      });
+  });
 
 
-const content = {
-  name: 'sample-node-app',
-  version: '1.0.0',
-  description: 'Sample App',
-  main: 'index.js',
-  scripts: { test: 'echo "Error: no test specified" && exit 1' },
-  keywords: [],
-  author: '',
-  license: 'ISC',
-  dependencies: { redoc: '2.0.0' }
-};
+// const content = {
+//   name: 'sample-node-app',
+//   version: '1.0.0',
+//   description: 'Sample App',
+//   main: 'index.js',
+//   scripts: { test: 'echo "Error: no test specified" && exit 1' },
+//   keywords: [],
+//   author: '',
+//   license: 'ISC',
+//   dependencies: { redoc: '2.0.0' }
+// };
 
-bitbucket.source.createFileCommit({
-  ...repositoryDetails,
-  _body: {
-    'package.json': JSON.stringify(content, null, 2),
-  },
-  branch: 'redocly-update',
-  message: 'Updated dependency',
-  author: 'Redocly <bot@redocly.com>'
-}).then(console.log()).catch(console.error);
+// bitbucket.source.createFileCommit({
+//   ...repositoryDetails,
+//   _body: {
+//     'package.json': JSON.stringify(content, null, 2),
+//   },
+//   branch: 'redocly-update',
+//   message: 'Updated dependency',
+//   author: 'Redocly <bot@redocly.com>'
+// }).then(console.log()).catch(console.error);
