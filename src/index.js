@@ -47,9 +47,6 @@ async function getMainBranchCommitHash() {
   const { data: { commit: { hash } } } = await bitbucket.repositories.readSrcRoot({ ...repositoryDetails, format: 'meta' });
   return hash;
 }
-// bitbucket.repositories.readSrcRoot({ ...repositoryDetails, format: 'meta' })
-//   .then(({ data, headers }) => console.log(JSON.stringify(data, null, 2)))
-//   .catch((err) => console.error(err))
 
 async function getPackageJsonContent({ path = PACKAGE_JSON_PATH, commit }) {
   const { data: raw } = await bitbucket.repositories.readSrc({
@@ -75,20 +72,6 @@ function updateDependencyVersion(packageJsonContent) {
   ) || packageJsonContent;
 }
 
-// bitbucket.repositories.readSrc({ ...repositoryDetails, commit: "54386e6edc4b0cbc481aaef4c2d68e65304892d6", path: '.gitignore' })
-//   .then(({ data, headers }) => console.log(data, headers))
-//   .catch((err) => console.error(err))
-
-
-// bitbucket.pullrequests.list({ ...repositoryDetails })
-//   .then(({ data, headers }) => console.log(data, headers))
-//   .catch((err) => console.error(err))
-
-// bitbucket.repositories.getBranch({ name: 'main', ...repositoryDetails, fields: ['target'] })
-//   .then(({ data, headers }) => console.log(data.target.hash))
-//   .catch((err) => console.error(JSON.stringify(err, null, 2)))
-
-
 // TODO: something here. Maybe remove the old one
 async function checkoutBranchForUpdate({ commit, branсh = "redocly-update" }) {
   await bitbucket.repositories.createBranch({
@@ -103,18 +86,6 @@ async function checkoutBranchForUpdate({ commit, branсh = "redocly-update" }) {
 
   return true;
 }
-
-// bitbucket.repositories.createBranch({
-//   ...repositoryDetails,
-//   _body: {
-//     name: "redocly-update",
-//     target : {
-//       hash : "54386e6edc4b0cbc481aaef4c2d68e65304892d6",
-//     }
-//   }
-// })
-//   .then(({ data, headers }) => console.log(JSON.stringify(data, null, 2), headers))
-//   .catch((err) => console.error(JSON.stringify(err, null, 2)))
 
 async function commitChanges({ branch, path, content }) {
   const { data } = await bitbucket.source.createFileCommit({
@@ -131,7 +102,7 @@ async function commitChanges({ branch, path, content }) {
 }
 
 
-// // TODO: handle bad credentials
+// TODO: handle bad credentials
 getMainBranchCommitHash()
   .then(commit => {
     console.log(`Main branch latest commit - ${commit}`);
