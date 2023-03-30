@@ -144,8 +144,13 @@ async function main() {
     return;
   }
 
+  if (PACKAGE_VERSION === version) {
+    console.log('The latest version is already installed');
+    return;
+  }
+
   // TODO: we may not need to update this at all
-  console.log(`Found "${PACKAGE_NAME}": "${version}". Desired version is ${PACKAGE_VERSION}`);
+  console.log(`Found "${PACKAGE_NAME}": "${version}". Desired version is "${PACKAGE_VERSION}"`);
 
   const updatedPackageJson = updateDependencyVersion(packageJsonContent, PACKAGE_VERSION);
 
@@ -165,7 +170,7 @@ async function main() {
 
   console.log('Creating a new PR...');
 
-  const data = await createPr('main', BRANCH_NAME);
+  await createPr('main', BRANCH_NAME);
 
   console.log('Done 🚀');
 }
